@@ -5,10 +5,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
+  type LoaderFunction,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { themeSessionResolver } from "./servers/sessions.server";
+import { ThemeProvider } from "remix-themes";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -19,9 +23,16 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap",
   },
 ];
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const { getTheme } = await themeSessionResolver(request);
+  return {
+    theme: getTheme() || 'dark',
+  };
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -42,7 +53,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const data = useLoaderData();
+  return (
+    <ThemeProvider specifiedTheme={data.theme || null} themeAction="/action/set-theme">
+      <Outlet />
+    </ThemeProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
